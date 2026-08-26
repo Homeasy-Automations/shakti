@@ -97,9 +97,10 @@
 
 // ============ Reveal on scroll ============
 (function(){
-  const revealEls = document.querySelectorAll('.card, .timeline-item, .tier, .stat-card');
+  const revealEls = document.querySelectorAll(
+    '.card, .timeline-item, .tier, .stat-card, .photo:not(.hero-grid .photo), .photo-ph, .gallery-item, .section-head:not(.page-hero .section-head), .clip-card, .form-card, .social-embed-card'
+  );
   if(!revealEls.length || !('IntersectionObserver' in window)) return;
-  revealEls.forEach(el=> el.style.setProperty('--reveal','0'));
   const io = new IntersectionObserver((entries)=>{
     entries.forEach(e=>{
       if(e.isIntersecting){
@@ -109,10 +110,29 @@
       }
     });
   }, {threshold:.12});
+  // Group siblings so items within the same parent stagger in sequence
+  const groups = new Map();
   revealEls.forEach(el=>{
-    el.style.opacity = 0;
-    el.style.transform = 'translateY(16px)';
-    el.style.transition = 'opacity .5s ease, transform .5s ease';
-    io.observe(el);
+    const key = el.parentElement;
+    const list = groups.get(key) || [];
+    list.push(el);
+    groups.set(key, list);
   });
+  groups.forEach(list=>{
+    list.forEach((el, i)=>{
+      el.style.opacity = 0;
+      el.style.transform = 'translateY(18px)';
+      el.style.transition = `opacity .6s cubic-bezier(.16,1,.3,1) ${Math.min(i*0.08,.4)}s, transform .6s cubic-bezier(.16,1,.3,1) ${Math.min(i*0.08,.4)}s`;
+      io.observe(el);
+    });
+  });
+})();
+
+// ============ Header shrink on scroll ============
+(function(){
+  const header = document.querySelector('.site-header');
+  if(!header) return;
+  const onScroll = ()=> header.classList.toggle('is-scrolled', window.scrollY > 12);
+  onScroll();
+  window.addEventListener('scroll', onScroll, {passive:true});
 })();
